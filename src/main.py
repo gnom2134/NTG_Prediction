@@ -5,7 +5,7 @@ from sklearn import metrics
 
 
 from utils import NearestNeighborsFeats, plot_stuff, make_submission, leave_one_out_validation
-from models import KNN_pipeline, linear_pipeline, random_forest_pipeline, catboost_pipeline, smart_ensemble
+from models import KNN_pipeline, linear_pipeline, random_forest_pipeline, catboost_pipeline
 
 
 def find_best(preds, rmse_score):
@@ -33,13 +33,17 @@ if __name__ == "__main__":
 
         test_knn_feats = NNF.predict(tst_df[tst_df.columns.drop(["Well"])].values)
         test_knn_feats_df = pd.DataFrame(
-            test_knn_feats, columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])]
+            test_knn_feats,
+            columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])],
         )
         new_tst_df = pd.concat([new_tst_df, test_knn_feats_df], axis=1)
 
-        train_knn_feats = NNF.predict(trn_df[trn_df.columns.drop(["Well", "NTG"])].values, train=True)
+        train_knn_feats = NNF.predict(
+            trn_df[trn_df.columns.drop(["Well", "NTG"])].values, train=True
+        )
         train_knn_feats_df = pd.DataFrame(
-            train_knn_feats, columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])]
+            train_knn_feats,
+            columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])],
         )
         new_trn_df = pd.concat([new_trn_df, train_knn_feats_df], axis=1)
 
@@ -55,7 +59,9 @@ if __name__ == "__main__":
 
     print("Linear models...")
     for i in ["lasso", "ridge"]:
-        pred, model = linear_pipeline(new_trn_df[new_trn_df.columns.drop(["Well"])], new_tst_df, use=i)
+        pred, model = linear_pipeline(
+            new_trn_df[new_trn_df.columns.drop(["Well"])], new_tst_df, use=i
+        )
         val_rmse = leave_one_out_validation(
             saved_results, trn_df, model, lambda x, y: np.sqrt(metrics.mean_squared_error(x, y))
         )
@@ -87,9 +93,15 @@ if __name__ == "__main__":
     make_submission(tst_df, pred, "rand_f")
 
     print("Catboost model...")
-    pred, model = catboost_pipeline(new_trn_df[new_trn_df.columns.drop(["Well"])], new_tst_df, silent=True)
+    pred, model = catboost_pipeline(
+        new_trn_df[new_trn_df.columns.drop(["Well"])], new_tst_df, silent=True
+    )
     val_rmse = leave_one_out_validation(
-        saved_results, trn_df, model, lambda x, y: np.sqrt(metrics.mean_squared_error(x, y)), silent=True
+        saved_results,
+        trn_df,
+        model,
+        lambda x, y: np.sqrt(metrics.mean_squared_error(x, y)),
+        silent=True,
     )
     plot_stuff(trn_df, tst_df, pred, size)
     find_best(pred, val_rmse)
@@ -125,4 +137,3 @@ if __name__ == "__main__":
     plot_stuff(trn_df, tst_df, pred, size)
     find_best(pred, 0.0)
     make_submission(tst_df, pred, "ensemble_2")
-
