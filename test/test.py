@@ -1,36 +1,36 @@
 import numpy as np
 import pandas as pd
 from sklearn import metrics
+from src.models import KNN_pipeline, linear_pipeline, random_forest_pipeline, catboost_pipeline
+from src.utils import leave_one_out_validation
 
 
 class DummyModel:
     def __init__(self):
-        self.y = None
+        self._y = None
 
-    def fit(self, X, y, **kwargs):
-        self.y = np.mean(y)
+    def fit(self, _x, _y):
+        self._y = np.mean(_y)
 
-    def predict(self, X, **kwargs):
-        answer = np.ones(X.shape[0])
-        answer[:] = self.y
+    def predict(self, _x):
+        answer = np.ones(_x.shape[0])
+        answer[:] = self._y
         return answer
 
 
 def test_validation():
-    from src.utils import leave_one_out_validation
-
-    N = 500
-    SIZE = 10
+    p_n = 500
+    p_size = 10
 
     saved_results = {}
-    for i in range(N):
+    for _ in range(p_n):
         data = np.random.uniform()
         df = pd.DataFrame(
             {
-                "Well": np.random.uniform(SIZE),
-                "X": np.random.uniform(SIZE),
-                "Y": np.random.uniform(SIZE),
-                "NTG": [data for _ in range(SIZE)],
+                "Well": np.random.uniform(p_size),
+                "X": np.random.uniform(p_size),
+                "Y": np.random.uniform(p_size),
+                "NTG": [data for _ in range(p_size)],
             }
         )
         model = DummyModel()
@@ -46,38 +46,36 @@ def test_validation():
 
 
 def test_models():
-    from src.models import KNN_pipeline, linear_pipeline, random_forest_pipeline, catboost_pipeline
+    p_n = 500
+    p_size = 100
 
-    N = 500
-    SIZE = 100
-
-    for i in range(N):
-        column_1 = np.random.uniform(size=SIZE)
-        column_2 = np.random.uniform(size=SIZE)
-        column_3 = np.random.uniform(size=SIZE)
+    for _ in range(p_n):
+        column_1 = np.random.uniform(size=p_size)
+        column_2 = np.random.uniform(size=p_size)
+        column_3 = np.random.uniform(size=p_size)
         trn_df = pd.DataFrame(
             {
-                "Well": column_1[: SIZE // 2],
-                "X": column_2[: SIZE // 2],
-                "Y": column_3[: SIZE // 2],
-                "NTG": column_1[: SIZE // 2] + column_2[: SIZE // 2] + column_3[: SIZE // 2],
+                "Well": column_1[: p_size // 2],
+                "X": column_2[: p_size // 2],
+                "Y": column_3[: p_size // 2],
+                "NTG": column_1[: p_size // 2] + column_2[: p_size // 2] + column_3[: p_size // 2],
             }
         )
         tst_df = pd.DataFrame(
             {
-                "Well": column_1[SIZE // 2 :],
-                "X": column_2[SIZE // 2 :],
-                "Y": column_3[SIZE // 2 :],
-                "NTG": column_1[SIZE // 2 :] + column_2[SIZE // 2 :] + column_3[SIZE // 2 :],
+                "Well": column_1[p_size // 2 :],
+                "X": column_2[p_size // 2 :],
+                "Y": column_3[p_size // 2 :],
+                "NTG": column_1[p_size // 2 :] + column_2[p_size // 2 :] + column_3[p_size // 2 :],
             }
         )
         preds, _ = linear_pipeline(trn_df, tst_df, target="NTG", use="linear")
         assert np.isclose(np.sqrt(metrics.mean_squared_error(preds, tst_df["NTG"])), 0.0)
 
-    for i in range(N):
-        column_1 = np.random.uniform(size=SIZE)
-        column_2 = [x for x in range(SIZE)]
-        column_3 = [x for x in range(SIZE)]
+    for _ in range(p_n):
+        column_1 = np.random.uniform(size=p_size)
+        column_2 = [x for x in range(p_size)]
+        column_3 = [x for x in range(p_size)]
         trn_df = pd.DataFrame({"Well": column_1, "X": column_2, "Y": column_3, "NTG": column_1})
         preds, _ = KNN_pipeline(trn_df, trn_df, target="NTG", k=1, metric="euclidean")
         assert np.isclose(np.sqrt(metrics.mean_squared_error(preds, trn_df["NTG"])), 0.0)
