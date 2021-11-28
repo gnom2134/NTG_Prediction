@@ -126,11 +126,3 @@ if __name__ == "__main__":
     find_best(pred, 0.0)
     make_submission(tst_df, pred, "ensemble_2")
 
-    print("Ensembles models...")
-    ensemble_pred, model = smart_ensemble(trn_df, tst_df, size, best_pred)
-    plot_stuff(trn_df, tst_df, ensemble_pred, size)
-    make_submission(tst_df, ensemble_pred, "smart_ensemble1")
-
-    ensemble_pred, model = smart_ensemble(trn_df, tst_df, size, best_pred, ensemble_pred)
-    plot_stuff(trn_df, tst_df, ensemble_pred, size)
-    make_submission(tst_df, ensemble_pred, "smart_ensemble2")
