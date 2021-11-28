@@ -35,7 +35,11 @@ def test_validation():
         )
         model = DummyModel()
         res = leave_one_out_validation(
-            saved_results, df, model, lambda x, y: np.sqrt(metrics.mean_squared_error(x, y)), save_res=True
+            saved_results,
+            df,
+            model,
+            lambda x, y: np.sqrt(metrics.mean_squared_error(x, y)),
+            save_res=True,
         )
         assert np.isclose(0.0, res)
         assert np.isclose(saved_results["common"][1], 0.0)
@@ -78,6 +82,10 @@ def test_models():
         preds, _ = KNN_pipeline(trn_df, trn_df, target="NTG", k=1, metric="euclidean")
         assert np.isclose(np.sqrt(metrics.mean_squared_error(preds, trn_df["NTG"])), 0.0)
         preds, _ = random_forest_pipeline(trn_df, trn_df, target="NTG")
-        assert np.isclose(np.sqrt(metrics.mean_squared_error(preds, trn_df["NTG"])), 0.0, rtol=1e-1, atol=1e-1)
+        assert np.isclose(
+            np.sqrt(metrics.mean_squared_error(preds, trn_df["NTG"])), 0.0, rtol=1e-1, atol=1e-1
+        )
         preds, _ = catboost_pipeline(trn_df, trn_df, target="NTG")
-        assert np.isclose(np.sqrt(metrics.mean_squared_error(preds, trn_df["NTG"])), 0.0, rtol=1e-1, atol=1e-1)
+        assert np.isclose(
+            np.sqrt(metrics.mean_squared_error(preds, trn_df["NTG"])), 0.0, rtol=1e-1, atol=1e-1
+        )

@@ -11,6 +11,7 @@ class NearestNeighborsFeats(BaseEstimator, ClassifierMixin):
     """
     This class should implement KNN features extraction
     """
+
     def __init__(self, n_jobs, k_list, metric, n_classes=None, n_neighbors=None, eps=1e-6):
         self.n_jobs = n_jobs
         self.k_list = k_list
@@ -86,16 +87,25 @@ class NearestNeighborsFeats(BaseEstimator, ClassifierMixin):
             feature_list += [neighs_dist[k - 1] * neighs_y[k - 1]]
             feature_list += [neighs_y[k - 1] / neighs_dist[k - 1]]
             feature_list += list(
-                np.mean(np.array(self.X[neighs[train:k]] - np.array(x[0])) * np.array([neighs_y[train:k]]).T, axis=0)
-            )
-            feature_list += list(
                 np.mean(
-                    np.array(self.X[neighs[train:k]] - np.array(x[0]) + self.eps) / np.array([neighs_y[train:k]]).T,
+                    np.array(self.X[neighs[train:k]] - np.array(x[0]))
+                    * np.array([neighs_y[train:k]]).T,
                     axis=0,
                 )
             )
-            feature_list += list(np.mean(np.array(self.X[neighs[train:k]]) * np.array([neighs_y[train:k]]).T, axis=0))
-            feature_list += list(np.mean(np.array(self.X[neighs[train:k]]) / np.array([neighs_y[train:k]]).T, axis=0))
+            feature_list += list(
+                np.mean(
+                    np.array(self.X[neighs[train:k]] - np.array(x[0]) + self.eps)
+                    / np.array([neighs_y[train:k]]).T,
+                    axis=0,
+                )
+            )
+            feature_list += list(
+                np.mean(np.array(self.X[neighs[train:k]]) * np.array([neighs_y[train:k]]).T, axis=0)
+            )
+            feature_list += list(
+                np.mean(np.array(self.X[neighs[train:k]]) / np.array([neighs_y[train:k]]).T, axis=0)
+            )
 
             return_list += [feature_list]
 
@@ -109,7 +119,9 @@ def make_submission(tst_df, preds, name):
     tst_df.to_csv("submission_" + name + ".csv", index=False)
 
 
-def leave_one_out_validation(saved_results, data, model, m, description="common", save_res=False, **kwargs):
+def leave_one_out_validation(
+    saved_results, data, model, m, description="common", save_res=False, **kwargs
+):
     k_list = [2, 5, 9]
     result = []
 
@@ -129,17 +141,23 @@ def leave_one_out_validation(saved_results, data, model, m, description="common"
 
             test_knn_feats = NNF.predict(new_test[new_test.columns.drop(["NTG"])].values)
             test_knn_feats_df = pd.DataFrame(
-                test_knn_feats, columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])]
+                test_knn_feats,
+                columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])],
             )
             new_test_data = pd.concat([new_test_data, test_knn_feats_df], axis=1)
 
-            train_knn_feats = NNF.predict(new_data[new_data.columns.drop(["NTG"])].values, train=True)
+            train_knn_feats = NNF.predict(
+                new_data[new_data.columns.drop(["NTG"])].values, train=True
+            )
             train_knn_feats_df = pd.DataFrame(
-                train_knn_feats, columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])]
+                train_knn_feats,
+                columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])],
             )
             new_train_data = pd.concat([new_train_data, train_knn_feats_df], axis=1)
 
-        model.fit(new_train_data[new_train_data.columns.drop(["NTG"])], new_train_data["NTG"], **kwargs)
+        model.fit(
+            new_train_data[new_train_data.columns.drop(["NTG"])], new_train_data["NTG"], **kwargs
+        )
 
         pred = model.predict(new_test_data[new_test_data.columns.drop(["NTG"])])
         result.append(pred[0])
