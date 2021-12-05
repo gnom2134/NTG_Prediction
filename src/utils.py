@@ -116,7 +116,7 @@ class NearestNeighborsFeats(BaseEstimator, ClassifierMixin):
 
 def make_submission(tst_df, preds, name):
     tst_df["NTG"] = preds
-    tst_df.to_csv("submission_" + name + ".csv", index=False)
+    tst_df.to_csv("./subs/submission_" + name + ".csv", index=False)
 
 
 def leave_one_out_validation(
