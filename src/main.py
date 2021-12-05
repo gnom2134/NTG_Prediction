@@ -1,53 +1,33 @@
 import numpy as np
 import pandas as pd
 import warnings
+import click
 from sklearn import metrics
 
 
-from utils import NearestNeighborsFeats, plot_stuff, make_submission, leave_one_out_validation
+from utils import plot_stuff, make_submission, leave_one_out_validation
 from models import KNN_pipeline, linear_pipeline, random_forest_pipeline, catboost_pipeline
 
 
-def find_best(preds, rmse_score):
-    global best_pred, best_rmse
+@click.command()
+@click.option("--train", help="Path to the train file")
+@click.option("--test", help="Path to the test file")
+@click.option("--preprocessed_train", help="Path to the preprocessed train file")
+@click.option("--preprocessed_test", help="Path to the preprocessed test file")
+def main(train, test, preprocessed_train, preprocessed_test):
+    def find_best(preds, rmse_score):
+        nonlocal best_pred, best_rmse
 
-    if rmse_score < best_rmse:
-        best_pred = preds
-        best_rmse = rmse_score
+        if rmse_score < best_rmse:
+            best_pred = preds
+            best_rmse = rmse_score
 
-
-if __name__ == "__main__":
     warnings.filterwarnings("ignore")
 
-    trn_df = pd.read_csv("../data/Training_wells.csv")
-    tst_df = pd.read_csv("../data/Empty_part.csv")
-
-    k_list = [2, 5, 9]
-    new_tst_df = tst_df.copy()
-    new_trn_df = trn_df.copy()
-
-    print("KNN features extracting...")
-    for metric in ["minkowski", "cosine", "manhattan", "euclidean"]:
-        NNF = NearestNeighborsFeats(n_jobs=1, k_list=k_list, metric=metric)
-        NNF.fit(trn_df[trn_df.columns.drop(["NTG", "Well"])].values, trn_df["NTG"].values)
-
-        test_knn_feats = NNF.predict(tst_df[tst_df.columns.drop(["Well"])].values)
-        test_knn_feats_df = pd.DataFrame(
-            test_knn_feats,
-            columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])],
-        )
-        new_tst_df = pd.concat([new_tst_df, test_knn_feats_df], axis=1)
-
-        train_knn_feats = NNF.predict(
-            trn_df[trn_df.columns.drop(["Well", "NTG"])].values, train=True
-        )
-        train_knn_feats_df = pd.DataFrame(
-            train_knn_feats,
-            columns=[metric + "_feature" + str(x) for x in range(test_knn_feats.shape[1])],
-        )
-        new_trn_df = pd.concat([new_trn_df, train_knn_feats_df], axis=1)
-
-    new_tst_df = new_tst_df.sort_values("Well")
+    trn_df = pd.read_csv(train)
+    tst_df = pd.read_csv(test)
+    new_tst_df = pd.read_csv(preprocessed_test)
+    new_trn_df = pd.read_csv(preprocessed_train)
 
     size = (tst_df["Y"].max() - tst_df["Y"].min() + 1, tst_df["X"].max() - tst_df["X"].min() + 1)
 
@@ -137,3 +117,7 @@ if __name__ == "__main__":
     plot_stuff(trn_df, tst_df, pred, size)
     find_best(pred, 0.0)
     make_submission(tst_df, pred, "ensemble_2")
+
+
+if __name__ == "__main__":
+    main()
